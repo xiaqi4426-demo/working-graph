@@ -1,5 +1,7 @@
 # Cognitive Graph — Concept v0.1
 
+> Naming note: **Working Graph** is the public name of the skill in this repository. This original concept note uses **Cognitive Graph** for the broader idea; the skill implements the working-graph form in §10.2. Other lifecycle and runtime possibilities below are conceptual directions, not shipped features.
+
 ## 1. Motivation
 
 Complex problem solving is not naturally linear.
