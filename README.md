@@ -1,138 +1,118 @@
-# Cognitive Graph
+# Working Graph
 
-**An external problem topology for agents.**
+**A live problem map for AI agents.**
 
-Cognitive Graph is a concept for giving agents a lightweight, editable map of the problem they are currently solving.
+> **The conversation is linear. The problem isn't.**
 
-Most agent systems already have some combination of:
+Architecture reviews branch. Debugging produces competing explanations. Research uncovers questions that matter later.
 
-- conversation / transcript — what happened;
-- memory — what should be retained across time;
-- context — what the model should see right now;
-- plans or to-do lists — what to do next;
-- artifacts — files, code, data, notes, experiments, and other concrete outputs.
+Working Graph gives your agent a lightweight Markdown map of that evolving problem: **what matters, how it connects, where the current focus is, and where the evidence lives.**
 
-What is often missing is an explicit representation of:
+When a useful side question appears, put it on the map and keep going. Return to it when it matters.
 
-> **What does the problem currently look like? Where am I in it? What other points exist, and how are they connected?**
+## Try it
 
-A complex problem is rarely a list. It branches, converges, produces side questions, dead ends, dependencies, unresolved points, and new directions. A conversation is linear, but the problem itself is not.
+Install with the [Skills CLI](https://github.com/vercel-labs/skills):
 
-Cognitive Graph is intended to represent that missing structure.
-
-## Core idea
-
-The system is deliberately small:
-
-```text
-Map
-  ↓
-Node Card
-  ↓
-Underlying Artifacts
+```bash
+npx skills add xiaqi4426-demo/working-graph --skill working-graph
 ```
 
-- **Map** shows the topology: what points exist, which points are connected, direction when useful, and current focus.
-- **Node Card** explains what a point means, why it matters, how it relates to nearby points, and where to look for more detail.
-- **Artifacts** contain the actual detailed material: Markdown, code, experiments, data, commits, papers, transcripts, etc.
-
-The graph is not a second source of truth for those artifacts. It is an external working model of the problem space.
-
-## Minimal concepts
-
-### Node
-
-A node means:
-
-> There is a point in the problem space worth being able to return to.
-
-A node does **not** need a predefined type such as `Task`, `Hypothesis`, `Bug`, or `Decision`.
-
-A minimal node needs:
+Then ask your agent:
 
 ```text
-id
-title
-summary
-refs
+Use the working-graph skill for this architecture review.
+Read the skill and maintain the graph as the problem evolves.
 ```
 
-The `summary` matters: a title alone is often not enough for an agent to decide whether a node is worth exploring.
+The agent keeps the active graph in `.working-graph/graph.md` inside your project and reuses it when continuing the same problem. The skill supplies instructions, a template, and examples; your agent reads and updates the files.
 
-Nodes may also be incomplete. A placeholder such as:
+The CLI requires Node.js/npm. Using the skill requires an agent that can load skill instructions and read/write project files. For manual installation, copy `SKILL.md`, `graph-template.md`, and `examples.md` together into a `working-graph` folder in your agent's supported skills location.
 
-```text
-Migration semantics ?
+## A side question without losing the thread
+
+An illustrative architecture review starts with configuration and branches into authority, merge rules, and storage:
+
+```mermaid
+flowchart TD
+    N1["N1 Configuration"] --- N2["N2 Authority"]
+    N1 --- N3["N3 Merge rules"]
+    N1 --- N4["N4 Storage scope · current focus"]
+    N4 --- N5["N5 Local authorization?"]
+    N4 --- N2
 ```
 
-is valid even when the agent has not yet investigated it.
+While investigating storage scope, the agent notices that local authorization may need separate treatment. It adds a small card:
 
-### Edge
+```markdown
+### N5 — Local authorization?
 
-An edge means:
+**Summary**
 
-> These two points are related.
+Check whether device-local grants should be excluded from configuration sync.
+Deferred while storage scope is clarified.
 
-The map only needs to distinguish, at most:
+**Refs**
 
-```text
-A ─── B
-A ───→ B
+- None yet; inspect the relevant configuration sources when this branch resumes.
 ```
 
-The arrow does not carry a fixed ontology such as `depends_on` or `supports`. It only preserves direction when direction is useful.
+One relation summary explains why N4 and N5 connect. Focus stays on N4 unless the new question blocks it. When that branch is complete, the agent can inspect the map and return to N5.
 
-The detailed meaning of the relationship belongs in a short natural-language **relation summary**, surfaced in the relevant node card.
+The example illustrates the intended workflow; it is not a measured comparison or a recorded agent run.
 
-### Focus
+## How it works
 
-An agent should not need to load the whole graph.
+| Layer | Purpose |
+| --- | --- |
+| **Map** | Show the important points, their connections, and current focus. |
+| **Node card** | Explain one point, its nearby relationships, and where to look next. |
+| **Artifacts** | Keep the detailed evidence in files, code, papers, experiments, or other source material. |
 
-It can work from a current focus node or subgraph, inspect nearby cards, and open referenced artifacts only when needed.
+A node needs a stable `id`, a `title`, a short `summary`, and zero or more `refs`. It can represent a question, hypothesis, constraint, finding, decision, or deferred direction.
 
-This enables progressive disclosure:
+An edge records a relationship. Direction is optional; its meaning is explained in ordinary language. Each relation explanation is stored once and read with either connected node.
 
-```text
-Map
-↓
-Card
-↓
-Artifact
-```
+**Schema-light, protocol-strong:** keep the reading and editing conventions clear, and let the task determine the graph's contents.
 
-## What Cognitive Graph is not
+## When it helps
 
-Cognitive Graph is not:
+Try it on architecture reviews, debugging, research, or design discussions where:
 
-- a knowledge graph ontology;
-- a task manager;
-- a replacement for memory;
-- a replacement for context;
-- a full project-management system;
-- a requirement that every thought become a node;
-- a requirement that one project have one giant graph.
+- several branches affect one another;
+- new side questions repeatedly interrupt the current work;
+- rejected directions are worth remembering;
+- the work continues across sessions or context changes;
+- detailed evidence is spread across several artifacts.
 
-The design principle is:
+For a short, linear task, work directly. The graph should earn its maintenance cost.
 
-> **Schema-light, protocol-strong.**
+## How it fits with existing tools
 
-The harness should define how nodes are addressed, inspected, connected, referenced, focused, updated, and traversed.
+| Tool or state | Main question |
+| --- | --- |
+| Transcript | What happened? |
+| Memory | What should be retained across time? |
+| Context | What should the model see right now? |
+| Plan / todo | What should happen next? |
+| Artifact | Where is the detailed material? |
+| **Working Graph** | **What does the problem look like, where are we in it, and how do its parts connect?** |
 
-It should avoid defining what kinds of things the agent is allowed to think about.
+The graph represents the agent's current working interpretation. Update it when understanding changes, and check referenced evidence before relying on a claim.
 
-## Why it may matter
+## Status and feedback
 
-A Cognitive Graph gives an agent somewhere to put a thought without either:
+**Experimental.** This release is a Markdown skill with a template and examples. Its usefulness during long, complex work still needs evaluation through real use.
 
-1. pursuing it immediately and losing focus, or
-2. dropping it and hoping it is remembered later.
+Useful feedback includes whether it preserved a deferred question, avoided repeating a rejected path, or became too costly to maintain. Open an issue with a small example of the task and what happened.
 
-It can also provide a shared coordination surface for multiple agents. Different agents may work on different nodes or subgraphs while sharing the same evolving problem topology.
+## Read more
 
-## Status
+- [Skill instructions](SKILL.md)
+- [Graph template and editing conventions](graph-template.md)
+- [Behavior examples](examples.md)
+- [Original concept and design rationale](docs/concept.md)
 
-This repository currently captures the concept only.
+## License
 
-The next useful step is not to design a large graph framework. It is to dogfood the smallest possible protocol on real work — architecture design, coding/debugging, research, and paper analysis — and observe whether agents actually use the graph to stay oriented, preserve side branches, and navigate artifacts more effectively.
-
-See [docs/concept.md](docs/concept.md) for the full concept.
+[MIT](LICENSE).
